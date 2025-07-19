@@ -18,6 +18,7 @@ import {
   Filter
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 interface Subscription {
   id: string;
@@ -130,6 +131,12 @@ const Index = () => {
             </p>
           </div>
           <div className="flex items-center gap-3 mt-4 sm:mt-0">
+            <Link to="/reports">
+              <Button variant="outline" size="sm">
+                <TrendingUp className="h-4 w-4 mr-2" />
+                Relatórios
+              </Button>
+            </Link>
             <Button variant="outline" size="sm">
               <Bell className="h-4 w-4 mr-2" />
               Lembretes
