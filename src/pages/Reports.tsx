@@ -18,30 +18,133 @@ const Reports = () => {
   // Funções de exportação
   const exportToPDF = async () => {
     try {
-      const element = document.getElementById('reports-content');
-      if (!element) return;
-
-      const canvas = await html2canvas(element, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 20;
+      const contentWidth = pageWidth - 2 * margin;
+      
+      // Configurações de texto
+      pdf.setFont('helvetica');
+      
+      // Cabeçalho
+      pdf.setFontSize(20);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text('RELATÓRIO DE ASSINATURAS', margin, 30);
+      
+      pdf.setFontSize(12);
+      pdf.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, margin, 40);
+      pdf.text(`Período: ${period}`, margin, 48);
+      
+      let yPos = 65;
+      
+      // Resumo Executivo
+      pdf.setFontSize(16);
+      pdf.text('RESUMO EXECUTIVO', margin, yPos);
+      yPos += 10;
+      
+      pdf.setFontSize(12);
+      pdf.text(`Gasto Total: R$ ${currentMonthTotal.toFixed(2)}`, margin, yPos);
+      yPos += 8;
+      pdf.text(`Variação: ${percentageChange > 0 ? '+' : ''}${percentageChange.toFixed(1)}%`, margin, yPos);
+      yPos += 8;
+      pdf.text(`Média Mensal: R$ 168,50`, margin, yPos);
+      yPos += 8;
+      pdf.text(`Economia Potencial: R$ 45,90`, margin, yPos);
+      yPos += 20;
+      
+      // Gastos Mensais
+      pdf.setFontSize(16);
+      pdf.text('GASTOS MENSAIS', margin, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(10);
+      // Cabeçalho da tabela
+      pdf.text('Mês', margin, yPos);
+      pdf.text('Valor (R$)', margin + 40, yPos);
+      pdf.text('Assinaturas', margin + 80, yPos);
+      yPos += 8;
+      
+      // Dados dos gastos mensais
+      monthlyTrends.forEach(item => {
+        pdf.text(item.month, margin, yPos);
+        pdf.text(`R$ ${item.amount.toFixed(2)}`, margin + 40, yPos);
+        pdf.text(item.subscriptions.toString(), margin + 80, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 15;
+      
+      // Gastos por Categoria
+      pdf.setFontSize(16);
+      pdf.text('GASTOS POR CATEGORIA', margin, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(10);
+      // Cabeçalho da tabela
+      pdf.text('Categoria', margin, yPos);
+      pdf.text('Valor (R$)', margin + 60, yPos);
+      pdf.text('Porcentagem (%)', margin + 110, yPos);
+      yPos += 8;
+      
+      // Dados das categorias
+      categorySpending.forEach(item => {
+        pdf.text(item.name, margin, yPos);
+        pdf.text(`R$ ${item.value.toFixed(2)}`, margin + 60, yPos);
+        pdf.text(`${item.percentage}%`, margin + 110, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 15;
+      
+      // Próximos Pagamentos
+      pdf.setFontSize(16);
+      pdf.text('PRÓXIMOS PAGAMENTOS', margin, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(10);
+      // Cabeçalho da tabela
+      pdf.text('Serviço', margin, yPos);
+      pdf.text('Valor (R$)', margin + 50, yPos);
+      pdf.text('Data', margin + 100, yPos);
+      pdf.text('Dias', margin + 140, yPos);
+      yPos += 8;
+      
+      // Dados dos pagamentos
+      upcomingPayments.forEach(item => {
+        if (yPos > pageHeight - margin) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        pdf.text(item.service, margin, yPos);
+        pdf.text(`R$ ${item.amount.toFixed(2)}`, margin + 50, yPos);
+        pdf.text(item.date, margin + 100, yPos);
+        pdf.text(`${item.days} dias`, margin + 140, yPos);
+        yPos += 6;
+      });
+      
+      yPos += 15;
+      
+      // Insights
+      if (yPos > pageHeight - 80) {
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        yPos = margin;
       }
-
+      
+      pdf.setFontSize(16);
+      pdf.text('INSIGHTS', margin, yPos);
+      yPos += 15;
+      
+      pdf.setFontSize(10);
+      insights.forEach(item => {
+        if (yPos > pageHeight - 30) {
+          pdf.addPage();
+          yPos = margin;
+        }
+        pdf.text(`• ${item.title}: ${item.description} - ${item.value}`, margin, yPos);
+        yPos += 8;
+      });
+      
       pdf.save(`relatorio-assinaturas-${new Date().toISOString().split('T')[0]}.pdf`);
       toast({
         title: "PDF exportado com sucesso!",
